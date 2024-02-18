@@ -1,3 +1,3 @@
 # space-vaders
 
-# not your typical space invaders
+not your typical space invaders
