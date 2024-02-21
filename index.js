@@ -144,7 +144,21 @@ class Counter {
     }
 
     drawCounter() {
-        console.log(this.counter)
+
+        c.strokeStyle = 'white'; // Change to the desired color
+
+        // Draw border
+        c.lineWidth = 2;
+        c.strokeRect(10, 35, 160, 40);
+
+        c.fillRect(10, 35, 160, 40);
+
+        // Set font style
+        c.font = "18px monospace";
+        c.fillStyle = "white";
+        
+        // Draw text
+        c.fillText("Enemy count: " + this.counter, 20, 60);
     }
 }
 
@@ -169,6 +183,7 @@ function restartGame() {
             y: Math.random() * -canvas.height
         };
     });
+    counter.counter = 0;
 }
 
 const player = new Player();
@@ -196,6 +211,7 @@ function gameLoop() {
     c.fillRect(0,0,canvas.width, canvas.height);
     
     player.update();
+    counter.drawCounter();
     
     projectiles.forEach((projectile, index) =>{
         if (projectile.position.y + projectile.radius <= 0) {
@@ -224,7 +240,6 @@ function gameLoop() {
                     invaders.splice(index, 1);
                     projectiles.splice(j, 1);
                     counter.incrementCounter();
-                    counter.drawCounter();
                 }, 0);
             }
         });
