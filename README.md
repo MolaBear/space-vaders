@@ -1,4 +1,7 @@
 # space-vaders
 
 not your typical space invaders
-<img width="1920" height="1020" alt="image" src="https://github.com/user-attachments/assets/5b8e3e0d-4294-486a-8f36-fdaa4ef38ed8" />
+Move ship with arrow keys (<) left, (>) right, (^)up, (v)down
+
+<img width="1920" height="929" alt="image" src="https://github.com/user-attachments/assets/d764c66f-8bdc-4e89-ada9-cfe81c63455f" />
+
