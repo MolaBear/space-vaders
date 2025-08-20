@@ -91,10 +91,7 @@ class Invader {
             this.height = image.height * scale;
 
             if (canSpawnAnywhere) {
-                this.position = {
-                    x: Math.random() * (canvas.width - this.width),
-                    y: Math.random() * (canvas.height - this.height)
-                };
+                this.position = getSafeSpawnPosition(this.width, this.height);
             } else {
                 this.position = {
                     x: Math.random() * (canvas.width - this.width),
@@ -248,14 +245,10 @@ function gameLoop() {
         
         projectiles.forEach((projectile, j) => {
             if (
-                projectile.position.y - projectile.radius <=
-                    invader.position.y + invader.height &&
-                projectile.position.x + projectile.radius >=
-                    invader.position.x &&
-                projectile.position.x - projectile.radius <=
-                    invader.position.x + invader.width &&
-                projectile.position.y + projectile.radius >=
-                    invader.position.y
+                projectile.position.y - projectile.radius <= invader.position.y + invader.height &&
+                projectile.position.x + projectile.radius >= invader.position.x &&
+                projectile.position.x - projectile.radius <= invader.position.x + invader.width &&
+                projectile.position.y + projectile.radius >= invader.position.y
             ) {
                 setTimeout(() => {
                     invaders.splice(index, 1);
@@ -399,6 +392,7 @@ function restartGame() {
     gameRunning = true;
     aliensKilled = 0; 
     startTime = Date.now();
+    isLevelUp = false;
     
     player.position = {
         x: canvas.width / 2 - player.width / 2,
@@ -411,6 +405,7 @@ function restartGame() {
             y: Math.random() * -canvas.height
         };
     });
+
     keys.ArrowLeft.pressed = false;
     keys.ArrowDown.pressed = false;
     keys.ArrowRight.pressed = false;
