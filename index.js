@@ -80,12 +80,8 @@ class Projectile{
 }
 
 class Invader {
-    constructor() {
-        this.velocity = {
-            x: 0,
-            y: 1
-        };
-
+    constructor(canSpawnAnywhere) {
+        this.velocity = { x: 0, y: 1 };
         const image = new Image();
         image.src = './img/invader.png';
         image.onload = () => {
@@ -93,10 +89,18 @@ class Invader {
             this.image = image;
             this.width = image.width * scale;
             this.height = image.height * scale;
-            this.position = {
-                x: Math.random() * canvas.width, 
-                y: Math.random() * -canvas.height
-            };
+
+            if (canSpawnAnywhere) {
+                this.position = {
+                    x: Math.random() * (canvas.width - this.width),
+                    y: Math.random() * (canvas.height - this.height)
+                };
+            } else {
+                this.position = {
+                    x: Math.random() * (canvas.width - this.width),
+                    y: -this.height - Math.random() * canvas.height
+                };
+            }
         };
     }
 
@@ -134,35 +138,37 @@ class Invader {
     }
 }
 
-function endGame() {
-    gameRunning = false; 
-    const result = confirm("Game over! Do you want to restart?");
-    if (result) {
-        restartGame();
+class FloatingText {
+    constructor(text, position) {
+        this.text = text;
+        this.position = { ...position };
+        this.alpha = 1;
+        this.ySpeed = -1;
+    }
+
+    update() {
+        this.position.y += this.ySpeed;
+        this.alpha -= 0.02;
+        this.draw();
+    }
+
+    draw() {
+        c.save();
+        c.globalAlpha = this.alpha;
+        c.fillStyle = "white";
+        c.font = "20px sans-serif";
+        c.textAlign = "center";
+        c.fillText(this.text, this.position.x, this.position.y);
+        c.restore();
     }
 }
 
-function restartGame() {
-   
-    gameRunning = true;
-    player.position.x;
-    player.position.y;
 
-    player.position = {
-        x: canvas.width / 2 - player.width / 2,
-        y: canvas.height - player.height * 2
-    };
-
-    invaders.forEach(invader => {
-        invader.position = {
-            x: Math.random() * canvas.width,
-            y: Math.random() * -canvas.height
-        };
-    });
-}
 const player = new Player();
 const projectiles = [];
 const invaders = [];
+const floatingTexts = [];
+
 
 const keys = {
     ArrowLeft:{
@@ -175,6 +181,10 @@ const keys = {
         pressed:false
     },space:{
         pressed:false
+    },KeyA:{
+        pressed:false
+    },KeyD:{
+        pressed:false
     }
 }
 
@@ -182,6 +192,18 @@ let frames = 0
 let randomInterval = Math.floor(Math.random() * 500 + 500)
 
 let gameRunning = true;
+let startTime = Date.now()
+let isLevelUp = false
+let aliensKilled = 0;
+
+
+let notification = {
+    text: "",
+    subtext: "",
+    alpha: 0,
+    timer: 0
+};
+
 function gameLoop() {
     if (!gameRunning) return; 
 
@@ -189,6 +211,24 @@ function gameLoop() {
     c.fillStyle = 'black'
     c.fillRect(0,0,canvas.width, canvas.height)
     
+    if (notification.alpha > 0) {
+        c.save();
+        c.globalAlpha = notification.alpha * 0.7;
+        c.fillStyle = "yellow";
+        c.font = "30px sans-serif";
+        c.textAlign = "center";
+        c.fillText(notification.text, canvas.width / 2, 50); 
+        c.font = "20px sans-serif";
+        c.fillText(notification.subtext, canvas.width / 2, 80);
+        c.restore();
+
+        const delta = 16;
+        notification.timer -= delta;
+        if (notification.timer <= 0) {
+            notification.alpha -= 0.02;
+            if (notification.alpha < 0) notification.alpha = 0;
+        }
+    }
 
     player.update();
     
@@ -220,37 +260,66 @@ function gameLoop() {
                 setTimeout(() => {
                     invaders.splice(index, 1);
                     projectiles.splice(j, 1);
+                    aliensKilled++;
+                    floatingTexts.push(new FloatingText("+1", { 
+                        x: invader.position.x + invader.width / 2, 
+                        y: invader.position.y 
+                    }))
                 }, 0);
             }
         });
     });
 
-
-    if(keys.ArrowLeft.pressed && player.position.x >=0){
-        player.velocity.x = -5
-        player.rotation = -0.15
-    }else if(keys.ArrowRight.pressed && player.position.x + player.width <= canvas.width){
-        player.velocity.x = 5
-        player.rotation = 0.15
-    }else{
-        player.velocity.x = 0
-        player.rotation = 0
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        floatingTexts[i].update();
+        if (floatingTexts[i].alpha <= 0) {
+            floatingTexts.splice(i, 1);
+        }
     }
-    
-    if(keys.ArrowUp.pressed && player.position.y >=0){
+
+   const elapsed = (Date.now() - startTime) / 1000
+    if ((elapsed >= 100 || aliensKilled > 10) && !isLevelUp) {
+        isLevelUp = true;
+        showNotification("Rotation Unlocked!", "Press A and D to rotate", 5000);
+    }
+    if (isLevelUp) {
+        handleRotation(player, keys)
+    }
+
+    if (keys.ArrowLeft.pressed && player.position.x >= 0) {
+        player.velocity.x = -5
+        if(!isLevelUp) player.rotation = -0.15
+    } else if (keys.ArrowRight.pressed && player.position.x + player.width <= canvas.width) {
+        player.velocity.x = 5
+        if(!isLevelUp) player.rotation = 0.15
+    } else {
+        player.velocity.x = 0
+        if(!isLevelUp) player.rotation = 0
+    }
+
+    if (keys.ArrowUp.pressed && player.position.y >= 0) {
         player.velocity.y = -5
-    }else if(keys.ArrowDown.pressed && player.position.y + player.height <= canvas.height){
+    } else if (keys.ArrowDown.pressed && player.position.y + player.height <= canvas.height) {
         player.velocity.y = 5
-    }else{
+    } else {
         player.velocity.y = 0
     }
+
     
     if (frames % randomInterval === 0) {
-        invaders.push(new Invader()); 
+        invaders.push(new Invader(isLevelUp)); 
         randomInterval = Math.floor(Math.random() * 100 + 100);
         frames = 0;
     }
     frames++;
+
+    c.save();
+    c.fillStyle = "white";
+    c.font = "25px sans-serif";
+    c.textAlign = "left";
+    c.fillText(`${aliensKilled}`, 20, 40);
+    c.restore();
+
 }
 
 gameLoop();
@@ -270,16 +339,24 @@ addEventListener('keydown', ({key}) =>{
         case 'ArrowDown':
             keys.ArrowDown.pressed = true;
             break
+        case 'a':
+            keys.KeyA.pressed = true;
+            break
+        case 'd':
+            keys.KeyD.pressed = true;
+            break
         case ' ':
+            const speed = 10
             projectiles.push(new Projectile({
                     position:{
                         x:player.position.x + player.width/2,
-                        y:player.position.y
+                        y:player.position.y + player.height/2,
                     },
-                    velocity:{
-                        x:0,
-                        y:-10
+                    velocity: {
+                        x: Math.cos(player.rotation - Math.PI/2) * speed,
+                        y: Math.sin(player.rotation - Math.PI/2) * speed
                     }
+
             }))
             break
     }
@@ -299,7 +376,76 @@ addEventListener('keyup', ({key}) =>{
         case 'ArrowDown':
             keys.ArrowDown.pressed = false;
             break
+        case 'a':
+            keys.KeyA.pressed = false;
+            break
+        case 'd':
+            keys.KeyD.pressed = false;
+            break
         case ' ':
             break
     }
 })
+
+function endGame() {
+    gameRunning = false; 
+    const result = confirm("Game over! Aliens Killed:" + aliensKilled + " Do you want to start over?");
+    if (result) {
+        restartGame();
+    }
+}
+
+function restartGame() {
+    gameRunning = true;
+    aliensKilled = 0; 
+    startTime = Date.now();
+    
+    player.position = {
+        x: canvas.width / 2 - player.width / 2,
+        y: canvas.height - player.height * 2
+    };
+
+    invaders.forEach(invader => {
+        invader.position = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height
+        };
+    });
+    keys.ArrowLeft.pressed = false;
+    keys.ArrowDown.pressed = false;
+    keys.ArrowRight.pressed = false;
+    keys.ArrowUp.pressed = false;
+    keys.KeyA.pressed = false;
+    keys.KeyD.pressed = false;
+    keys.space.pressed = false;
+}
+
+function showNotification(text, subtext ,duration = 5000) {
+    notification.text = text;
+    notification.subtext = subtext;
+    notification.alpha = 1;
+    notification.timer = duration;
+}
+
+function handleRotation(player, keys) {
+    if (keys.KeyA.pressed) {
+        player.rotation -= 0.05
+    }
+    if (keys.KeyD.pressed) {
+        player.rotation += 0.05
+    }
+}
+
+function getSafeSpawnPosition(width, height) {
+    let x, y;
+    do {
+        x = Math.random() * (canvas.width - width);
+        y = Math.random() * (canvas.height - height);
+    } while (
+        x < player.position.x + player.width &&
+        x + width > player.position.x &&
+        y < player.position.y + player.height &&
+        y + height > player.position.y
+    );
+    return { x, y };
+}
