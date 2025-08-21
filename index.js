@@ -344,7 +344,18 @@ addEventListener('keydown', ({key}) =>{
             keys.KeyD.pressed = true;
             break
         case ' ':
-            spawnProjectile();
+            const speed = 10
+            projectiles.push(new Projectile({
+                    position:{
+                        x:player.position.x + player.width/2,
+                        y:player.position.y + player.height/2,
+                    },
+                    velocity: {
+                        x: Math.cos(player.rotation - Math.PI/2) * speed,
+                        y: Math.sin(player.rotation - Math.PI/2) * speed
+                    }
+
+            }))
             break
     }
 })
@@ -377,49 +388,6 @@ addEventListener('keyup', ({key}) =>{
             break
     }
 })
-
-// ----------------------- Touch Controls -----------------------
-canvas.addEventListener("touchstart", (e) => {
-    const touch = e.touches[0];
-    const x = touch.clientX;
-    const currentTime = Date.now();
-    const tapDelta = currentTime - lastTapTime;
-
-    if(tapDelta < doubleTapThreshold) {
-        spawnProjectile();
-    } else {
-        if(x < canvas.width/2) keys.ArrowLeft.pressed = true;
-        else keys.ArrowRight.pressed = true;
-    }
-
-    lastTapTime = currentTime;
-});
-
-canvas.addEventListener("touchend", () => {
-    keys.ArrowLeft.pressed = false;
-    keys.ArrowRight.pressed = false;
-});
-
-// ----------------------- Device Orientation (Tilt) -----------------------
-window.addEventListener("deviceorientation", (event) => {
-    if(!canRotate) return;
-    const gamma = event.gamma; // left/right tilt
-    player.rotation = (gamma / 90) * 0.3;
-});
-
-
-function spawnProjectile() {
-    const speed = 10
-            projectiles.push(new Projectile({
-                    position:{x:player.position.x + player.width/2, y:player.position.y + player.height/2},
-                    velocity: {
-                        x: Math.cos(player.rotation - Math.PI/2) * speed,
-                        y: Math.sin(player.rotation - Math.PI/2) * speed
-                    }
-
-            }))
-}
-
 
 function endGame() {
     gameRunning = false; 
