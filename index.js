@@ -321,16 +321,20 @@ gameLoop();
 addEventListener('keydown', ({key}) =>{
     console.log(key)
     switch(key){
-        case 'ArrowLeft', '4':
+        case 'ArrowLeft':
+        case  '4':
             keys.ArrowLeft.pressed = true;
             break
-        case 'ArrowRight', '6':
+        case 'ArrowRight':
+        case '6':
             keys.ArrowRight.pressed = true;
             break
-        case 'ArrowUp', '8':
+        case 'ArrowUp':
+        case '8':
             keys.ArrowUp.pressed = true;
             break
-        case 'ArrowDown', '5':
+        case 'ArrowDown':
+        case '5':
             keys.ArrowDown.pressed = true;
             break
         case 'a':
@@ -359,15 +363,19 @@ addEventListener('keydown', ({key}) =>{
 addEventListener('keyup', ({key}) =>{
     switch(key){
         case 'ArrowLeft':
+        case '4':
             keys.ArrowLeft.pressed = false;
             break
         case 'ArrowRight':
+        case '6':
             keys.ArrowRight.pressed = false;
             break
         case 'ArrowUp':
+        case '8':
             keys.ArrowUp.pressed = false;
             break
         case 'ArrowDown':
+        case '5':
             keys.ArrowDown.pressed = false;
             break
         case 'a':
